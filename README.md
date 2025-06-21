@@ -17,7 +17,7 @@ The Ouroboros cycle comprises the following steps, continuously refining model a
 
 * Framework: PyTorch, Transformers
 * Language models tested: GPT-J (6B), Llama 2 (70B), GPT-4o (via API)
-* Hardware requirements: Single A100 GPU for GPT-J; 8xA100 for Llama 2.
+* Hardware requirements: M1 Max, or equivalent hardware.
 
 ## Upcoming Features & Improvements
 
@@ -34,7 +34,8 @@ Ouroboros fine-tunes models toward the preferences of a specific human superviso
 
 We welcome feedback, bug reports, contributions, and collaborative research efforts!
 * Contact: isonpayton@gmail.com
-* GitHub: paytonison
+* GitHub: @paytonison
+* X (The Platform Formerly Known as Twitter): @pls_stfu_payton
 
 ## License
 
