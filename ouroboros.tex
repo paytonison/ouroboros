@@ -146,7 +146,7 @@ Human min / 1k pairs $\downarrow$ & --- & 105 & 37 & \textbf{5}\\
 \end{table}
 
 \subsection{Ablation Study}
-Removing \emph{Labyrinth prompts} drops persona consistency by 11 pp.  Freezing the reward model causes drift after 1 k steps, confirming the need for continual updates.
+Removing \emph{Labyrinth prompts} drops persona consistency by 11 pp. Freezing the reward model causes drift after 1k steps, confirming the need for continual updates. Solution: \emph{continuous backpropagation} of teacher feedback.
 
 \section{Discussion}
 \paragraph{Compression vs.\ Overshoot.} Summaries risk omitting nuance; teacher judgment must balance brevity with fidelity.%
@@ -160,7 +160,7 @@ We tested only text‑based interactions; multimodal extensions may introduce ne
 Ouroboros reframes alignment as an \emph{ongoing dialogue} rather than a one‑shot annotation effort.  By fusing human creativity with cyclical reinforcement, we converge on models that not only answer correctly but \emph{sound like us}.  We invite the community to iterate on our open‑source framework and explore collective alignment protocols.
 
 \section*{Acknowledgments}
-We thank the open‑source LLM community for tooling and inspiration.
+We thank the open‑source LLM community for tooling and inspiration, especially Trent.
 
 \bibliographystyle{plain}
 \begin{thebibliography}{99}
