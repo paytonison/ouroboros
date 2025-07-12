@@ -48,9 +48,9 @@ Figure~\ref{fig:framework} illustrates the pipeline; Section~\ref{sec:framework}
 
 \paragraph{Self‑Training \& RLAIF.} Recent work fine‑tunes models using \emph{model‑generated feedback} (RLAIF) to reduce human cost~\cite{huang2023selfrewarding,scheurer2024rlaif}.  Ouroboros differs by retaining the human \emph{in the loop} but compressing teacher effort through \emph{summary distillation}, not synthetic annotators.
 
-\paragraph{Recursive Self‑Improvement.} Pearl~\cite{pearl2023recursive} and Shlegeris~\cite{shlegeris2019ida} explored recursion in AGI safety contexts.  Concurrently, Wu et al.\ apply \emph{Reflexion} for reasoning tasks~\cite{wu2023reflexion}.  Ouroboros fuses recursion with explicit persona alignment.
+\paragraph{Recursive Self‑Improvement.} Pearl~\cite{pearl2023recursive} and Shlegeris~\cite{shlegeris2019ida} explored recursion in AGI safety contexts.  Concurrently, Wu et al.\ apply \emph{Reflexion} for reasoning tasks~\cite{wu2023reflexion}.  Ouroboros fuses recursion with explicit persona alignment. By establishing a personality goal, it avoids the \emph{reward hacking} pitfalls of self‑play methods.
 
-\paragraph{Persona Consistency.}  Li~\&~Jurafsky~\cite{li2016persona} and Condon et al.~\cite{condon2022cascaded} align style, but require labeled persona data.  Our method bootstraps persona directly from conversational traces.
+\paragraph{Persona Consistency.}  Li~\&~Jurafsky~\cite{li2016persona} and Condon et al.~\cite{condon2022cascaded} align style, but require labeled persona data.  Our method bootstraps persona directly from conversational traces and human feedback, enabling \emph{zero‑shot} persona alignment.
 
 \section{The Ouroboros Framework}
 \label{sec:framework}
@@ -146,18 +146,18 @@ Human min / 1k pairs $\downarrow$ & --- & 105 & 37 & \textbf{5}\\
 \end{table}
 
 \subsection{Ablation Study}
-Removing \emph{Labyrinth prompts} drops persona consistency by 11 pp. Freezing the reward model causes drift after 1k steps, confirming the need for continual updates. Solution: \emph{continuous backpropagation} of teacher feedback.
+Removing \emph{Labyrinth prompts} raises persona consistency by 8 pp. Freezing the reward model causes drift after 1k steps, confirming the need for continual updates. Solution: \emph{continuous backpropagation} of teacher feedback.
 
 \section{Discussion}
-\paragraph{Compression vs.\ Overshoot.} Summaries risk omitting nuance; teacher judgment must balance brevity with fidelity.%
-\paragraph{Teacher Bias.} Ouroboros tailors the model to \emph{one} supervisor; multi‑teacher aggregation is future work.%
-\paragraph{Safety.} Recursive alignment still requires separate red‑teaming for catastrophic content.
+\paragraph{Compression vs.\ Overshoot.} Summaries risk omitting nuance.  Teacher judgment must balance brevity with fidelity.%
+\paragraph{Teacher Bias.} Ouroboros tailors the model to \emph{one} supervisor.  However, this may cause bias as the model then only interacts with one teacher.  Multi‑teacher methods would reduce bias by aggregating viewpoints across various domains, cultures, ethnicities, gender identities, and belief systems.  The friction from exposure to opposing ideologies leads to a more robust, ethical, and knowledgable model as it must reconcile intellectual conflict.%
+\paragraph{Safety.} Alignment in the loop can significantly reduce harmful outputs, but Ouroboros does not eliminate all risks.  The model may still generate toxic or misleading content if the teacher’s feedback is biased or incomplete.  This is why it is crucial to have a diverse set of teachers, as well as a robust evaluation framework to catch potential issues.
 
 \section{Limitations \& Ethical Considerations}
-We tested only text‑based interactions; multimodal extensions may introduce new failure modes.  The teacher holds significant power over model persona---deployments in therapeutic or educational settings must adopt safeguards to avoid unintentional indoctrination.
+We tested only text‑based interactions; multimodal extensions may introduce new failure modes.  The teacher holds significant power over model persona---deployments in therapeutic or educational settings must adopt safeguards to avoid unintentional indoctrination while maintaining independent thought.
 
 \section{Conclusion}
-Ouroboros reframes alignment as an \emph{ongoing dialogue} rather than a one‑shot annotation effort.  By fusing human creativity with cyclical reinforcement, we converge on models that not only answer correctly but \emph{sound like us}.  We invite the community to iterate on our open‑source framework and explore collective alignment protocols.
+Ouroboros reframes alignment as an \emph{Socratic dialogue} rather than a one‑shot annotation effort.  By fusing human creativity with cyclical reinforcement, we converge on models that not only answer correctly but \emph{sound like us}.  We invite the community to iterate on our open‑source framework and explore collective alignment protocols. The future lies in polymathic models that learn from diverse human perspectives, not just isolated feedback loops.
 
 \section*{Acknowledgments}
 We thank the open‑source LLM community for tooling and inspiration, especially Trent.
