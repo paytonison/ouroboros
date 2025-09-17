@@ -34,8 +34,8 @@ Ouroboros fine-tunes models toward the preferences of a specific human superviso
 
 We welcome feedback, bug reports, contributions, and collaborative research efforts!
 * Contact: isonpayton@gmail.com
-* GitHub: @paytonison
-* X (The Platform Formerly Known as Twitter): @pls_stfu_payton
+* LinkedIn: https://linkedin.com/in/paytonison
+* GitHub: https://github.com/paytonison
 
 ## License
 
