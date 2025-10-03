@@ -167,18 +167,6 @@ This reduces human labeling load; keep humans in the loop for **spot checks** an
 
 ---
 
-## Paper (LaTeX) & longform
-
-The canonical research draft lives in `ouroboros.tex`. If you prefer to iterate in Markdown, keep `paper/ouroboros.md` and convert with `pandoc`:
-
-```bash
-pandoc paper/ouroboros.md -o paper/ouroboros.pdf --pdf-engine=xelatex
-```
-
-When ready, tag a GitHub release and let **Zenodo** mint a DOI. Include the DOI badge here.
-
----
-
 ## Roadmap
 
 - Multi‑teacher variant (human + AI judges + rule checkers)  
