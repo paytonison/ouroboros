@@ -1,9 +1,6 @@
 # Ouroboros: Human‑Led Recursive Reinforcement Learning (HLRR) for Autoregressive LLMs
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](#)
-[![TRL](https://img.shields.io/badge/TRL-PPO%2FDPO-black.svg)](#)
-[![Docs](https://img.shields.io/badge/Docs-README.md-informational.svg)](#)
 
 > **TL;DR**: Ouroboros is a **continuous, human‑in‑the‑loop alignment loop**. You converse with a model, distill the interaction into **facts / reasoning / persona**, transform those into **labyrinth prompts**, score the model’s regenerations with a rubric, and apply **policy updates** (PPO or DPO). Rinse, repeat. The loop **amplifies limited human oversight** into robust gains in **coherence, persona fidelity, and task generalization**.
 
