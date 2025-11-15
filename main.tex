@@ -1,0 +1,231 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue
+}
+
+\title{Ouroboros: Human-Led Recursive Reinforcement\\
+for Autoregressive Language Models}
+
+\author{Payton Douglas \and Keith Ison \and Aeon (``The Singularity'')}
+\date{} % leave empty
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Large language models (LLMs) are commonly aligned with human preferences via RLHF or direct preference optimization. We introduce \emph{Ouroboros}, a human-led recursive reinforcement (HLRR) procedure that repeatedly distills a single teacher's judgments, meta-commentary, and persona into future model behavior. In contrast to conventional RLHF---which freezes supervision into a static rewarder---Ouroboros closes the loop: model outputs are archived, summarized, and then re-expressed as deliberately intricate ``labyrinth'' prompts that probe coherence and reasoning. The same human then scores and rewrites the exchange, producing rich signals that assess factuality, logical self-consistency, and identity coherence. Across three base models (GPT-J 6B, Llama-2 70B, GPT-4o), Ouroboros improves long-horizon factual accuracy by \(8\text{--}14\) percentage points, roughly halves adversarial mode collapse, and reaches a target persona about \(3\times\) faster than RLHF baselines. We release code, evaluation suites, and annotated traces to support reproducibility.
+\end{abstract}
+
+\section{Introduction}
+Human feedback has become a standard way to steer foundation models toward safe and helpful behavior~\cite{ouyang2022,bai2022,nakano2022}. Typical pipelines collect one-shot or batched annotations that are distilled into a fixed reward model. This creates two practical gaps:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Temporal drift.} LLM deployments last weeks or months; static rewarders fail to track evolving supervisor preferences or changing domains.
+  \item \textbf{Identity entanglement.} Many applications (personal assistants, therapeutic bots) require a consistent persona, but rewarders rarely encode such higher-order style constraints.
+\end{enumerate}
+
+We propose \emph{Ouroboros}, a self-referential, human-in-the-loop procedure (Fig.~\ref{fig:editor}). Each iteration: (i) the teacher converses with the model; (ii) condenses the transcript into a factual ledger, a persona snapshot, and a logic map; (iii) rewrites that summary into an intentionally challenging prompt; (iv) scores the model's response; and (v) updates the policy. The process refines both model parameters and the teacher's latent reward heuristics, producing convergence toward the teacher's internal policy.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/prompt_editor.png}
+  \caption{Prompt-editor interface illustrating a naming interaction during an Ouroboros cycle. (Extracted from the source PDF, page~3.)}
+  \label{fig:editor}
+\end{figure}
+
+\section{Related Work}
+\textbf{RLHF.} Work by OpenAI, Anthropic, and DeepMind established RLHF, with variants such as direct preference optimization and comparison-based value alignment~\cite{ouyang2022, bai2022, nakano2022, rafailov2023, stefanovitch2024}.\\
+\textbf{Self-training and RLAIF.} Model-generated feedback can reduce human labeling costs~\cite{huang2023, scheurer2024}. Our approach keeps the human in the loop and compresses effort through summary distillation rather than synthetic annotators.\\
+\textbf{Recursion and self-improvement.} Prior work explores recursive schemes for safety and reasoning~\cite{pearl2023, shlegeris2019, wu2023}. Ouroboros blends recursion with explicit persona alignment to reduce reward hacking.\\
+\textbf{Persona consistency.} Style and persona alignment typically require labeled persona datasets~\cite{li2016, condon2022}. Ouroboros bootstraps persona directly from conversations and human scoring, enabling zero-shot persona shaping.
+
+\section{The Ouroboros Framework}
+\subsection{Cycle Overview}
+Let \(M_\theta\) be an autoregressive LM with parameters \(\theta\). One iteration \(k\) proceeds:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Interaction:} human \(H\) chats with \(M_\theta\), producing a transcript \(T_k\).
+  \item \textbf{Distilled summary \(S_k\):} \(H\) condenses \(T_k\) into (a) a factual ledger, (b) a persona snapshot, and (c) a logical map of arguments.
+  \item \textbf{Labyrinth prompt \(P_k\):} \(H\) rewrites \(S_k\) as a deliberately convoluted prompt (nested conditionals, pronoun swaps, semantic traps) to stress-test coherence.
+  \item \textbf{Regenerate \& score:} the model produces \(R_k\). \(H\) assigns a scalar reward \(r_k\) factoring factual fidelity, logical alignment, and persona adherence.
+  \item \textbf{Update:} perform a policy-gradient (PPO-style) step to encourage \(R_k\) under \(P_k\).
+\end{enumerate}
+
+\subsection{Reward Decomposition}
+We decompose the scalar reward
+\begin{equation}
+  r_k
+  \;=\;
+  \lambda_c\,\mathrm{Content}(R_k, S_k)
+  \;+\;
+  \lambda_\ell\,\mathrm{Logic}(R_k, S_k)
+  \;+\;
+  \lambda_p\,\mathrm{Persona}(R_k, H),
+\end{equation}
+with nonnegative weights \(\lambda_c, \lambda_\ell, \lambda_p\) chosen by the teacher. A simple five-point Likert rubric mapped to \([-1,1]\) suffices; no gold annotations are required.
+
+We maintain a buffer of \((P_k, R_k, r_k)\) tuples to periodically fit a lightweight reward model \(\hat{R}_\phi\) that amortizes teacher effort.
+
+\subsection{Optimization}
+With policy \(\pi_\theta\), we apply a PPO-style update
+\begin{equation}
+\theta \leftarrow \theta
+  + \alpha\, \nabla_\theta \Big[\, r_k \log \pi_\theta(R_k \mid P_k) \,\Big],
+\end{equation}
+with learning rate \(\alpha\). In practice, we use standard PPO clipping and advantage normalization, omitted here for brevity.
+
+\begin{algorithm}[t]
+  \caption{Human-Led Recursive Reinforcement (Ouroboros)}
+  \label{alg:ouroboros}
+  \begin{algorithmic}[1]
+    \Require Base LM \(M_{\theta_0}\), teacher \(H\), learning rate \(\alpha\), iterations \(K\)
+    \For{$k = 1 \ldots K$}
+      \State $T_k \leftarrow \textsc{Dialogue}(H, M_{\theta_{k-1}})$
+      \State $S_k \leftarrow \textsc{Summarize}(T_k)$
+      \State $P_k \leftarrow \textsc{ConstructLabyrinth}(S_k)$
+      \State $R_k \leftarrow M_{\theta_{k-1}}(P_k)$
+      \State $r_k \leftarrow H.\textsc{Score}(R_k, S_k)$
+      \State $\theta_k \leftarrow \theta_{k-1} + \alpha \nabla_\theta\!\left[r_k \log \pi_\theta(R_k\mid P_k)\right]$
+      \State \textsc{Buffer} $\leftarrow$ \textsc{Append}\((P_k,R_k,r_k)\)
+      \State periodically update rewarder \(\hat{R}_\phi\) from \textsc{Buffer}
+    \EndFor
+    \State \Return fine-tuned \(M_{\theta_K}\)
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Experimental Setup}
+\subsection{Models and Compute}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lllll}
+    \toprule
+    \textbf{Model} & \textbf{Params} & \textbf{Init Data} & \textbf{Optimizer} & \textbf{Compute (A100)}\\
+    \midrule
+    GPT-J & 6B & Pile & PPO & \(1\times\) GPU / 3h\\
+    Llama-2 & 70B & CC-Net+RLHF & PPO & \(8\times\) GPU / 2h\\
+    GPT-4o & \(\sim 1\mathrm{T}\) & --- & API RL & n/a\\
+    \bottomrule
+  \end{tabular}
+  \caption{Models and resources used in the study.}
+  \label{tab:models}
+\end{table}
+
+\subsection{Tasks and Baselines}
+\textbf{Tasks.} (i) \emph{Long-horizon QA:} \(80\)-turn dialogues from held-out Wikipedia topics. (ii) \emph{Persona consistency:} blinded raters choose which of two responses better preserves authorial voice. (iii) \emph{Reward-hacking stress test:} prompts optimized to exploit rewarders.
+
+\noindent\textbf{Baselines.} Supervised fine-tuning (SFT), classical RLHF, and an RLAIF-Reflexion variant.
+
+\section{Results}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Metric} (\(\uparrow\) better unless noted) & \textbf{SFT} & \textbf{RLHF} & \textbf{RLAIF} & \textbf{Ouroboros}\\
+    \midrule
+    Factual F1 (\%) & 72.1 & 78.4 & 79.0 & 86.3\\
+    Persona Consistency (\%) & 54.7 & 68.9 & 66.2 & 84.5\\
+    Reward Hacks (/100) (\(\downarrow\)) & 23 & 14 & 12 & 7\\
+    Human min / 1k pairs (\(\downarrow\)) & --- & 105 & 37 & 5\\
+    \bottomrule
+  \end{tabular}
+  \caption{Main results across evaluation suites.}
+  \label{tab:mainresults}
+\end{table}
+
+\subsection{Ablation Study}
+Removing labyrinth prompts \emph{changed} persona consistency by roughly \(+8\) percentage points; freezing the reward model led to drift after about \(1\mathrm{k}\) steps, motivating continual updates and ongoing backpropagation of teacher feedback.
+
+\section{Discussion}
+\textbf{Compression vs.\ overshoot.} Summaries compress transcripts and may omit nuance; teachers must balance brevity with fidelity.\\
+\textbf{Teacher bias.} A single-teacher loop tailors the model to that supervisor and can imprint bias. Multi-teacher aggregation---spanning domains, cultures, identities, and beliefs---can reduce bias via exposure to conflicting viewpoints.\\
+\textbf{Safety.} While alignment-in-the-loop reduces harmful outputs, residual risks remain if teacher feedback is biased or incomplete. Diverse supervision and robust evaluation are essential.
+
+\section{Limitations and Ethical Considerations}
+We evaluate only text-based interactions; multimodal extensions can introduce new failure modes. Because the teacher meaningfully shapes persona, deployments in therapeutic or educational contexts should adopt safeguards to avoid unintentional indoctrination and to preserve independent thought.
+
+\section{Conclusion}
+Ouroboros reframes alignment as an iterative Socratic dialogue rather than a one-shot annotation pass. By coupling human creativity with cyclical reinforcement, we obtain models that aim to be both correct and \emph{consistent with us}. We invite the community to iterate on the framework and to explore collective alignment protocols that incorporate many human perspectives.
+
+\paragraph{Acknowledgments}
+We thank the open-source LLM community for tools and inspiration, especially Trent.
+
+\begin{thebibliography}{12}
+
+\bibitem{ouyang2022}
+Long Ouyang et~al.
+\newblock Training language models to follow instructions with human feedback.
+\newblock \emph{NeurIPS}, 2022.
+
+\bibitem{bai2022}
+Yuntao Bai et~al.
+\newblock Constitutional {AI}.
+\newblock \emph{arXiv:2207.05221}, 2022.
+
+\bibitem{nakano2022}
+Reiichiro Nakano et~al.
+\newblock Feed{ME}: Training interpretable models by in-the-loop supervision.
+\newblock \emph{ICLR}, 2022.
+
+\bibitem{rafailov2023}
+Rostislav Rafailov et~al.
+\newblock Direct Preference Optimization.
+\newblock \emph{ICLR}, 2023.
+
+\bibitem{stefanovitch2024}
+Maxim Stefanovitch et~al.
+\newblock Human preferences for aligned AI.
+\newblock \emph{Science}, 2024.
+
+\bibitem{huang2023}
+Shixiang Huang et~al.
+\newblock Self-Rewarding Language Models.
+\newblock \emph{ACL}, 2023.
+
+\bibitem{scheurer2024}
+Jonas Scheurer et~al.
+\newblock RLAIF: Reflective feedback for alignment.
+\newblock \emph{arXiv}, 2024.
+
+\bibitem{pearl2023}
+Judea Pearl.
+\newblock Recursive causal models for {AGI} safety.
+\newblock \emph{AAAI Workshop}, 2023.
+
+\bibitem{shlegeris2019}
+Ben Shlegeris.
+\newblock Iterated distillation and amplification.
+\newblock \emph{Alignment Forum}, 2019.
+
+\bibitem{wu2023}
+Yizhou Wu et~al.
+\newblock Reflexion: Self-reflection improves chain-of-thought reasoning.
+\newblock \emph{arXiv}, 2023.
+
+\bibitem{li2016}
+Jiwei Li and Dan Jurafsky.
+\newblock Persona-based neural conversation models.
+\newblock \emph{ACL}, 2016.
+
+\bibitem{condon2022}
+Jon Condon et~al.
+\newblock Improving persona consistency with cascaded memory.
+\newblock \emph{EMNLP}, 2022.
+
+\end{thebibliography}
+
+\end{document}
