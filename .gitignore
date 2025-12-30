@@ -1,4 +1,26 @@
-*.out
-*.log
+# macOS
+.DS_Store
+
+# Local agent instructions
+/AGENTS.md
+
+# LaTeX build artifacts
 *.aux
-main.pdf
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# Output (recommended)
+build/
+
+# In case someone compiles in-place
+paper/main.pdf
